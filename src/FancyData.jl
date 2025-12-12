@@ -30,10 +30,6 @@ function help()
       • readvals(xml, col; cal, type)
       • readfits(xml; cal, type) → DataFrame(:pos, :wid, :vol)
 
-    Usage:
-      using FancyData
-      FancyData.help()
-
     """)
     return nothing
 end
