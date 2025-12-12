@@ -8,7 +8,7 @@ Prerequisite: Measurements.jl, Printf.jl, DataFrames.jl, DelimitedFiles.jl, LsqF
 
 - Start Julia
 
-- '] dev path/to/FancyData'
+- `] dev path/to/FancyData`
 
 ## Features
 
