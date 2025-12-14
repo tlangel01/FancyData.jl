@@ -1,28 +1,27 @@
 """
-FancyData.jl — Utilities for Measurements, DataFrames, XML-based fit extraction
+# FancyData.jl
 
-Core measurement utilities:
-    • val(x)                 – extract value() broadcasted
-    • unc(x)                 – extract uncertainty() broadcasted
-    • mes(x)                 – formatted value(unc) string
-    • mean_std(x)            – mean with standard deviation
-    • wmean(x; :inex)        – weighted mean as Measurement
+Utilities for Measurements, DataFrames, XML-based fit extraction
 
-DataFrame utilities:
-    • tableDF(df)            – convert table to LaTeX SIunitx format
-    • writeDF(path, df)      – write DataFrame with header
-    • readDF(path; delim)    – read tabular file into DataFrame
+## Core measurement utilities:
+- `val(x)`
+- `unc(x)`
+- `mes(x)`
+- `mean_std(x)`
+- `wmean(x; mode=:both)`
 
-Spectrum utilities:
-    • bin(arr, z)            – rebin array into groups of z
+## DataFrame utilities
+- `tableDF(df)`
+- `writeDF(path, df)`
+- `readDF(path; delim)`
 
-Parenthesis utilities:
-    • p2v(str)               – parse "1.23(4)" → measurement
-    • p2c(in, out, cols)     – split column into value/error columns in new file
+## Parenthesis utilities
+- `p2v(str)`
+- `p2c(in, out, cols)`
 
-XML fit extractors:
-    • readvals(xml, col; cal, type)
-    • readfits(xml; cal, type) → DataFrame(:pos, :wid, :vol)
+## XML fit extractors:
+- `readvals(xml, col; cal, type)`
+- `readfits(xml; cal, type) → DataFrame(:pos, :wid, :vol)`
 
 """
 module FancyData
@@ -30,8 +29,8 @@ __precompile__()
 
 using Measurements, Printf, DataFrames, DelimitedFiles, LsqFit, Statistics, XMLDict
 
-val(x::Measurement) = Measurements.value(x)
-unc(x::Measurement) = Measurements.uncertainty(x)
+val(x) = Measurements.value(x)
+unc(x) = Measurements.uncertainty(x)
 
 """
     mes(x::Measurement)
@@ -125,15 +124,19 @@ function parse_measurement(s::AbstractString)
     )
 end
 
+"""
+    tableDF(DataFrame)
+
+Returns LaTeX table from a `DataFrame`
+"""
 function tableDF(DF)
     l,w = size(DF)
-    DF = mes2.(DF)
+    DF = mes.(DF)
     lengths = [maximum(length.([(typeof(DF[j,i])==Missing) ? 0 : string(DF[j,i]) for j in 1:l])) for i in 1:w]
 
     ## SIUnitx columns
     bunchastrings=["\\begin{table}[]\n\t\\centering\n\t\\caption{Caption}\n\t\\label{tab:my_label}\n\t\\begin{tabular}{\n"]
     for j in 1:w 
-        ## Finde die Längen von vor/nachkommastellen und fehlern (sins against humanity)
         a0 = any(parse_measurement("$(DF[i,j])").sign == "-" for i in 1:l) ? "-" : ""
         a1 = maximum(parse_measurement("$(DF[i,j])").int_digits  for i in 1:l)
         a2 = maximum(parse_measurement("$(DF[i,j])").frac_digits for i in 1:l)
@@ -159,12 +162,23 @@ function tableDF(DF)
     return join(bunchastrings)
 end 
 
+"""
+    writeDF(path/to/output.txt, DataFrame)
+
+Saves a DataFrame as a delimted file with delimiter `\\t`
+"""
 writeDF(out,DF) = writedlm(out,Iterators.flatten(([names(DF)],eachrow(DF))),'\t')
-readDF(path_to_DF;delim='\t') = DataFrame(readdlm(path_to_DF,delim)[2:end,:], strip.(readdlm(path_to_DF,delim)[1,:]))
+
+"""
+    readDF(path/to/input.txt, delimiter='\\t')
+
+Reads a delimited file to a DataFrame with default delimiter `\\t`
+"""
+readDF(path_to_DF,delimiter='\t') = DataFrame(readdlm(path_to_DF,delimiter)[2:end,:], strip.(readdlm(path_to_DF,delimiter)[1,:]))
 
 function p2v(str) # parenthesis to value
     try
-        return mes(measurement("$str"))
+        return [val(measurement(string(str))),unc(measurement(string(str)))]
     catch
         return str 
     end
@@ -205,7 +219,7 @@ function readfits(file;cal=true,type="peak")
     return (DataFrame(([pos wid vol]),[:pos,:wid,:vol]))
 end
 
-export measurement, bin, val, unc, mes, mes2, wmean2, wmean, mean2, tableDF, writeDF, readDF, p2v, p2c, readvals, readfits
+export val, unc, mes, wmean, mean_std, tableDF, writeDF, readDF, p2v, p2c, readvals, readfits
 
 
 
