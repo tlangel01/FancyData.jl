@@ -57,13 +57,16 @@ function mes(x::Measurement)
     first_digits < 3 && (i += 1)
 
     y = round(y, digits=i)
-    dy = round(Int, dy * 10.0^i)
 
+    # Scientific notation on large uncertainties
     if dy >= 30
+        dy = round(Int, dy * 10.0^i)
         exp = floor(Int, log10(abs(y)))
         y /= 10.0^exp
         return @sprintf("%.*f(%d)e%d", i, y, dy, exp)
     end
+
+    dy = round(Int, dy * 10.0^i)
 
     # Handle trailing zero uncertainty
     if isinteger(y) && dy % 10 == 0
