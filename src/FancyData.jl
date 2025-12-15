@@ -51,21 +51,19 @@ function mes(x::Measurement)
 
     dy == 0.0 && return string(round(y, sigdigits=6))
 
+    scientific_notation = dy >= 30 && y != 0
+    if scientific_notation
+        exp = floor(Int, log10(abs(y)))
+        y /= 10.0^exp
+        dy /= 10.0^exp
+    end
+
     # Determine precision
     i = -floor(Int, log10(dy))
     first_digits = round(dy * 10.0^i, sigdigits=2) # 10.0 is important don't change it to 10!
     first_digits < 3 && (i += 1)
 
     y = round(y, digits=i)
-
-    # Scientific notation on large uncertainties
-    if dy >= 30
-        dy = round(Int, dy * 10.0^i)
-        exp = floor(Int, log10(abs(y)))
-        y /= 10.0^exp
-        return @sprintf("%.*f(%d)e%d", i, y, dy, exp)
-    end
-
     dy = round(Int, dy * 10.0^i)
 
     # Handle trailing zero uncertainty
@@ -74,6 +72,7 @@ function mes(x::Measurement)
         dy ÷= 10
     end
 
+    scientific_notation && return @sprintf("%.*f(%d)e%d", i, y, dy, exp)
     return @sprintf("%.*f(%d)", i, y, dy)
 end
 
