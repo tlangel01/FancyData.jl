@@ -209,16 +209,44 @@ end
 function readvals(file,col;cal=true,type="peak")
     A = []
     cal ?  cal = "cal" : cal = "uncal"
-    for i in 1:length(file["fit"])
-        if typeof(file["fit"][i][type]) == Vector{XMLDict.XMLDictElement}
-            push!(A,[measurement.(parse.(Float64,file["fit"][i][type][j][cal][col]["value"]),parse.(Float64,file["fit"][i][type][j][cal][col]["error"])) for j in 1:length(file["fit"][i][type])])
-        else
-            push!(A,measurement.(parse.(Float64,file["fit"][i][type][cal][col]["value"]),parse.(Float64,file["fit"][i][type][cal][col]["error"])))
+    if type=="peak"
+        
+        for i in 1:length(file["fit"])
+            if typeof(file["fit"][i][type]) == Vector{XMLDict.XMLDictElement}
+                push!(A,[measurement.(parse.(Float64,file["fit"][i][type][j][cal][col]["value"]),parse.(Float64,file["fit"][i][type][j][cal][col]["error"])) for j in 1:length(file["fit"][i][type])])
+            else
+                push!(A,measurement.(parse.(Float64,file["fit"][i][type][cal][col]["value"]),parse.(Float64,file["fit"][i][type][cal][col]["error"])))
+            end
         end
+
+    elseif type in ["tot","bg","sub"]
+
+        if type == "tot"
+            int_type = 1
+        elseif type == "bg"
+            int_type = 2
+        else
+            int_type =3
+        end
+        for i in 1:length(file["fit"])
+            push!(A,measurement.(parse.(Float64,file["fit"][i]["integral"][int_type][cal][col]["value"]),parse.(Float64,file["fit"][i]["integral"][int_type][cal][col]["error"])))
+        end
+
+    else
+        throw(ArgumentError("type $type not a valid type"))
     end
     return vcat(A...)
 end
 
+"""
+    readfits(file, ...)
+
+Converts a XML-fitfile from hdtv to a DataFrame.
+
+Optional arguments include:
+- `cal`: `true` or `false`
+- `type`: "peak" (default), "tot", "bg", "sub"
+"""
 function readfits(file;cal=true,type="peak")
     str=parse_xml(read(file,String))
     pos=readvals(str,"pos", cal=cal, type=type)
