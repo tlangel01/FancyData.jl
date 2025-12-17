@@ -58,22 +58,20 @@ function mes(x::Measurement)
         dy /= 10.0^exp
     end
 
-    # Determine precision
-    i = -floor(Int, log10(dy))
-    first_digits = round(dy * 10.0^i, sigdigits=2) # 10.0 is important don't change it to 10!
+    precision_number = -floor(Int, log10(dy))
+    first_digits = round(dy * 10.0^precision_number, sigdigits=2) # 10.0 is important don't change it to 10!
     first_digits < 3 && (i += 1)
 
-    y = round(y, digits=i)
-    dy = round(Int, dy * 10.0^i)
+    y = round(y, digits=precision_number)
+    dy = round(Int, dy * 10.0^precision_number)
 
-    # Handle trailing zero uncertainty
     if isinteger(y) && dy % 10 == 0
-        i -= 1
+        precision_number -= 1
         dy ÷= 10
     end
 
-    scientific_notation && return @sprintf("%.*f(%d)e%d", i, y, dy, exp)
-    return @sprintf("%.*f(%d)", i, y, dy)
+    scientific_notation && return @sprintf("%.*f(%d)e%d", precision_number, y, dy, exp)
+    return @sprintf("%.*f(%d)", precision_number, y, dy)
 end
 
 """
@@ -256,8 +254,5 @@ function readfits(file;cal=true,type="peak")
 end
 
 export val, unc, mes, wmean, mean_std, tableDF, writeDF, readDF, p2v, p2c, readvals, readfits
-
-
-
 
 end # module 
