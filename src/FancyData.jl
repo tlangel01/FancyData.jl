@@ -1,27 +1,9 @@
 """
 # FancyData.jl
 
-Utilities for Measurements, DataFrames, XML-based fit extraction
+## Exported Functions
 
-## Core measurement utilities:
-- `val(x)`
-- `unc(x)`
-- `mes(x)`
-- `mean_std(x)`
-- `wmean(x; mode=:both)`
-
-## DataFrame utilities
-- `tableDF(df)`
-- `writeDF(path, df)`
-- `readDF(path; delim)`
-
-## Parenthesis utilities
-- `p2v(str)`
-- `p2c(in, out, cols)`
-
-## XML fit extractors:
-- `readvals(xml, col; cal, type)`
-- `readfits(xml; cal, type) → DataFrame(:pos, :wid, :vol)`
+`val`, `unc`, `mes`, `mean_std`, `wmean`, `tableDF`, `writeDF`, `readDF`, `readfits`
 
 """
 module FancyData
@@ -60,7 +42,7 @@ function mes(x::Measurement)
 
     precision_number = -floor(Int, log10(dy))
     first_digits = round(dy * 10.0^precision_number, sigdigits=2) # 10.0 is important don't change it to 10!
-    first_digits < 3 && (i += 1)
+    first_digits < 3 && (precision_number += 1)
 
     y = round(y, digits=precision_number)
     dy = round(Int, dy * 10.0^precision_number)
@@ -81,7 +63,7 @@ Calculates the weighted mean of `X`.
 
 Returns:
 - `:max` (default): a `Measurement` with the larger of internal/external error
-- `:both`: `(value, external_error, internal_error)`
+- `:both`: Returns external and internal uncertainties
 """
 function wmean(X::AbstractVector{<:Measurement}; mode::Symbol=:max)
     mode in [:max,:both] || throw(ArgumentError("mode must be :max or :both (got :$mode)"))
@@ -92,7 +74,7 @@ function wmean(X::AbstractVector{<:Measurement}; mode::Symbol=:max)
     dx_extern = sqrt(1 / (l-1) * sum(weights .* (x.-xbar).^2) / sum(weights))
     dx_intern = 1 / sqrt(sum(weights))
     l == 1 && (dx_extern = dx_intern)
-    mode === :both && return xbar, dx_extern, dx_intern
+    mode === :both && return (mean=xbar, ext=dx_extern, int=dx_intern)
     return  measurement(xbar, max(dx_extern,dx_intern))
 end
 
@@ -115,7 +97,7 @@ function parse_measurement(s::AbstractString)
     m = match(r"^(-)?(\d+)(?:\.(\d+))?(?:\((\d+)\))?(?:e([+-]?\d+))?$", s)
 
     if m === nothing
-        # Not a valid measurement string → return zeros and no sign
+        # Not a valid measurement string -> return zeros and no sign
         return (sign = "", int_digits = 0, frac_digits = 0, par_digits = 0, exp_digits = 0)
     end
 
@@ -123,10 +105,10 @@ function parse_measurement(s::AbstractString)
 
     return (
         sign = sign === nothing ? "" : "-",
-        int_digits = intpart === nothing ? 0 : length(intpart),
+        int_digits  = intpart  === nothing ? 0 : length(intpart),
         frac_digits = fracpart === nothing ? 0 : length(fracpart),
-        par_digits = parpart === nothing ? 0 : length(parpart),
-        exp_digits = expart === nothing ? 0 : length(expart)
+        par_digits  = parpart  === nothing ? 0 : length(parpart),
+        exp_digits  = expart   === nothing ? 0 : length(expart)
     )
 end
 
@@ -138,7 +120,7 @@ Returns LaTeX table from a `DataFrame`
 function tableDF(DF)
     l,w = size(DF)
     DF = mes.(DF)
-    lengths = [maximum(length.([(typeof(DF[j,i])==Missing) ? 0 : string(DF[j,i]) for j in 1:l])) for i in 1:w]
+lengths = [maximum(length.([(typeof(DF[j,i])==Missing) ? 0 : string(DF[j,i]) for j in 1:l])) for i in 1:w]
 
     ## SIUnitx columns
     bunchastrings=["\\begin{table}[]\n\t\\centering\n\t\\caption{Caption}\n\t\\label{tab:my_label}\n\t\\begin{tabular}{\n"]
@@ -253,6 +235,6 @@ function readfits(file;cal=true,type="peak")
     return (DataFrame(([pos wid vol]),[:pos,:wid,:vol]))
 end
 
-export val, unc, mes, wmean, mean_std, tableDF, writeDF, readDF, p2v, p2c, readvals, readfits
+export val, unc, mes, wmean, mean_std, tableDF, writeDF, readDF, readfits
 
 end # module 
