@@ -20,8 +20,9 @@ unc(x) = Measurements.uncertainty(x)
 Format a `Measurement` as a string `value(uncertainty)`.
 Returns `""` for `missing` and a plain number for exact values.
 """
+mes(x) = x
+mes(x::Missing) = ""
 function mes(x::Measurement)
-    x === missing && return ""
 
     # Ensure a Measurement was input
     try
@@ -120,7 +121,7 @@ Returns LaTeX table from a `DataFrame`
 function tableDF(DF)
     l,w = size(DF)
     DF = mes.(DF)
-lengths = [maximum(length.([(typeof(DF[j,i])==Missing) ? 0 : string(DF[j,i]) for j in 1:l])) for i in 1:w]
+    lengths = [maximum(length.([(typeof(DF[j,i])==Missing) ? 0 : string(DF[j,i]) for j in 1:l])) for i in 1:w]
 
     ## SIUnitx columns
     bunchastrings=["\\begin{table}[]\n\t\\centering\n\t\\caption{Caption}\n\t\\label{tab:my_label}\n\t\\begin{tabular}{\n"]
