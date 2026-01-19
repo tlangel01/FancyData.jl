@@ -34,7 +34,7 @@ function mes(x::Measurement)
 
     if dy == 0.0
         out = string(round(y, sigdigits=6))
-        out[end-1:end] == ".0" && out = out[1:end-2]
+        out[end-1:end] == ".0" && (out = out[1:end-2])
         return out 
     end
 
