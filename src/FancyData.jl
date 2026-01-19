@@ -32,7 +32,11 @@ function mes(x::Measurement)
         return x
     end
 
-    dy == 0.0 && return string(round(y, sigdigits=6))
+    if dy == 0.0
+        out = string(round(y, sigdigits=6))
+        out[end-1:end] == ".0" && out = out[1:end-2]
+        return out 
+    end
 
     scientific_notation = dy >= 30 && y != 0
     if scientific_notation
