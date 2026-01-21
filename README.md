@@ -1,11 +1,16 @@
 # FancyData.jl
 
-## Setup
+Some functions that I use regularly when working with DataFrames (DataFrames.jl) and uncertainties (Measurement.jl)
 
-- Prerequisite: Measurements.jl, Printf.jl, DataFrames.jl, DelimitedFiles.jl, LsqFit.jl, Statistics.jl, XMLDict.jl
+## Install via
 
 - `] add https://github.com/tlangel01/FancyData.jl.git`
 
 ## Features
 
-- Utilities for Measurements.jl, DataFrames.jl and others
+- `mes()`: Converts a Measurement to a String with format `value(uncertainty)`
+- `mean_std()`: Calculates the mean with standard deviation of a given array
+- `wmean()`: Calculates the weighted mean of a given array of Measurements
+- `tableDF()`: Prints a DataFrame to a TeX-formatted table
+- `readDF()`, `writeDF()`: Reads a delimited file to a DataFrame and vice versa
+- `readfits()`: Fitlistreader for HDTV-based XML-files
