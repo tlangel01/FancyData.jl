@@ -13,7 +13,7 @@
 module FancyData
 __precompile__()
 
-using Measurements, Printf, DataFrames, DelimitedFiles, LsqFit, Statistics, XMLDict
+using Measurements, Printf, DataFrames, DelimitedFiles, LsqFit, Statistics, EzXML
 
 val(x) = Measurements.value(x)
 unc(x) = Measurements.uncertainty(x)
