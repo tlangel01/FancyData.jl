@@ -2,7 +2,7 @@
 
 julia_version = "1.12.2"
 manifest_format = "2.0"
-project_hash = "cc09c7535a27e046829c01f7e13d47739a3455f3"
+project_hash = "1bdbb1744c353c10c85e60c0a2431714047aeb10"
 
 [[deps.ADTypes]]
 git-tree-sha1 = "8b2b045b22740e4be20654175cc38291d48539db"
@@ -256,6 +256,7 @@ uuid = "8f5d6c58-4d21-5cfd-889c-e3ad7ee6a615"
 version = "1.2.3"
 
 [[deps.FancyData]]
+deps = ["DataFrames", "DelimitedFiles", "EzXML", "LsqFit", "Measurements", "Printf", "Statistics", "XMLDict"]
 path = "."
 uuid = "4d4f2cbd-77f3-463f-9a10-7188e0cfd622"
 version = "0.1.0"

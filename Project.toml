@@ -6,6 +6,7 @@ authors = ["28tob "]
 [deps]
 DataFrames = "a93c6f00-e57d-5684-b7b6-d8193f3e46c0"
 DelimitedFiles = "8bb1440f-4735-579b-a4ab-409b98df4dab"
+EzXML = "8f5d6c58-4d21-5cfd-889c-e3ad7ee6a615"
 LsqFit = "2fda8390-95c7-5789-9bda-21331edee243"
 Measurements = "eff96d63-e80a-5855-80a2-b1b0885c5ab7"
 Printf = "de0858da-6303-5e67-8744-51eddeeeb8d7"
@@ -15,6 +16,7 @@ XMLDict = "228000da-037f-5747-90a9-8195ccbf91a5"
 [compat]
 DataFrames = "1.8.1"
 DelimitedFiles = "1.9.1"
+EzXML = "1.2.3"
 LsqFit = "0.15.1"
 Measurements = "2.14.1"
 Printf = "1.11.0"
