@@ -17,8 +17,8 @@ unc(x) = Measurements.uncertainty(x)
 """
     mes(x::Measurement)
 
-Format a `Measurement` as a string `value(uncertainty)`.
-Returns `""` for `missing` and a plain number for exact values.
+Format a measurement as a string value(uncertainty).
+Returns "" for `missing` and a plain number for exact values.
 """
 mes(x) = x
 mes(x::Missing) = ""
@@ -66,8 +66,8 @@ end
 
 Calculates the weighted mean of `X`. 
 
-Returns:
-- `:max` (default): a `Measurement` with the larger of internal/external error
+Available modes:
+- `:max`: (default): a `Measurement` with the larger of internal/external error
 - `:both`: Returns external and internal uncertainties
 """
 function wmean(X::AbstractVector{<:Measurement}; mode::Symbol=:max)
@@ -118,9 +118,9 @@ function parse_measurement(s::AbstractString)
 end
 
 """
-    tableDF(DataFrame)
+    tableDF(DF::DataFrame)
 
-Returns LaTeX table from a `DataFrame`
+Returns LaTeX table from a DataFrame.
 """
 function tableDF(DF)
     l,w = size(DF)
@@ -156,90 +156,158 @@ function tableDF(DF)
 end 
 
 """
-    writeDF(path/to/output.txt, DataFrame)
+    writeDF(file_out::String, DF::DataFrame)
 
-Saves a DataFrame as a delimted file with delimiter `\\t`
+Saves a DataFrame as a delimted file with default delimiter `\\t`.
 """
 writeDF(out,DF) = writedlm(out,Iterators.flatten(([names(DF)],eachrow(DF))),'\t')
 
 """
-    readDF(path/to/input.txt, delimiter='\\t')
+    readDF(file_in::String, delimiter='\\t'::Char)
 
-Reads a delimited file to a DataFrame with default delimiter `\\t`
+Reads a delimited file to a DataFrame with default delimiter `\\t`.
 """
 readDF(path_to_DF,delimiter='\t') = DataFrame(readdlm(path_to_DF,delimiter)[2:end,:], strip.(readdlm(path_to_DF,delimiter)[1,:]))
 
-function p2v(str) # parenthesis to value
-    try
-        return [val(measurement(string(str))),unc(measurement(string(str)))]
-    catch
-        return str 
-    end
-end
+"""
+    readfits(XML_file::String, mode::Symbol=:peak)
 
-function p2c(infile,outfile,cols) # parentheses to column
-    InArr = DataFrame(load(infile))
-    Header = ["" for i in 1:(length(InArr[1,:]) + length(cols))]
-    w_old = length(InArr[1,:])
-    w = w_old + length(cols)
-    l = length(InArr[:,1])
-    s = 0
-    OutArr = Array{Any}(undef,l,w)
-    for c in 1:w_old
-        c in cols ? (OutArr[:,c+s:(c+s+1)] = reduce(vcat,transpose.(p2v.(InArr[:,c]))); Header[c+s:c+s+1] = [names(InArr)[c],"Δ"*names(InArr)[c]]; s+=1) : (OutArr[:,c+s] = InArr[:,c]; Header[c+s]=names(InArr)[c])
-    end
-    save(outfile,DataFrame(OutArr,Header))
-end
+Reads an HDTV file and returns DataFrame
 
-function readvals(file,col;cal=true,type="peak")
-    A = []
-    cal ?  cal = "cal" : cal = "uncal"
-    if type=="peak"
-        
-        for i in 1:length(file["fit"])
-            if typeof(file["fit"][i][type]) == Vector{XMLDict.XMLDictElement}
-                push!(A,[measurement.(parse.(Float64,file["fit"][i][type][j][cal][col]["value"]),parse.(Float64,file["fit"][i][type][j][cal][col]["error"])) for j in 1:length(file["fit"][i][type])])
+Available modes:
+- `:peak`: position, width and volume of fitted peaks
+- `:sub`: position, width and volume of background-subtracted integrals
+- `:param`: peak, region and background marker of fits (if available)
+
+All returned values are calibrated if possible with uncalibrated values as a fallback.
+
+If uncertainties are present, the values are given as measurements.
+"""
+function readfits(file::String, mode::Symbol=:peak)
+    document = readxml(file)
+    fits = findall("//fit", document)
+
+    # Case 1: mode is :peak or :sub => pos, wid and vol
+    if mode in [:peak, :sub]
+        DF = DataFrame(
+            ID    = Float64[],
+            pos   = Measurement{Float64}[],
+            width = Measurement{Float64}[],
+            vol   = Measurement{Float64}[]
+        )
+    
+        for (i,fit) in enumerate(fits)
+            
+            # Select Type 
+            if mode == :peak
+                peak_nodes = findall("peak", fit)
             else
-                push!(A,measurement.(parse.(Float64,file["fit"][i][type][cal][col]["value"]),parse.(Float64,file["fit"][i][type][cal][col]["error"])))
+                peak_nodes = findall("integral[@integraltype='sub']", fit)
             end
+    
+            for (j,peak_node) in enumerate(peak_nodes)
+                next_row = DataFrame(
+                    ID    = [0.0],
+                    pos   = [measurement(0.0, 0.0)], 
+                    width = [measurement(0.0, 0.0)], 
+                    vol   = [measurement(0.0, 0.0)]
+                )
+        
+                # Use calibrated values if available, uncalibrated otherwise
+                calibrated_node = findfirst("cal", peak_node)
+                isnothing(calibrated_node) && (calibrated_node = findfirst("uncal", peak_node))
+
+                for quantity in ["pos", "width", "vol"]
+                    quantity_node = findfirst(quantity, calibrated_node)
+                    value_node = findfirst("value", quantity_node)
+                    error_node = findfirst("error", quantity_node)
+                    value = !isnothing(value_node) ? parse(Float64, nodecontent(value_node)) : 0.0
+                    error = !isnothing(error_node) ? parse(Float64, nodecontent(error_node)) : 0.0
+                    next_row[1, quantity] = measurement(value, error)
+                end
+    
+                next_row[1, "ID"] = i+(j-1)/10
+                
+                append!(DF, next_row)    
+            end
+            
         end
 
-    elseif type in ["tot","bg","sub"]
+    # Case 2: mode is :param => parameter-markers
+    elseif mode == :param
+        DF = DataFrame(
+            ID           = Float64[],
+            peakMarker   = Vector{Float64}[],
+            regionMarker = Tuple{Float64, Float64}[],
+            bgMarker     = Vector{Tuple{Float64, Float64}}[]
+        )
 
-        if type == "tot"
-            int_type = 1
-        elseif type == "bg"
-            int_type = 2
-        else
-            int_type =3
-        end
-        for i in 1:length(file["fit"])
-            push!(A,measurement.(parse.(Float64,file["fit"][i]["integral"][int_type][cal][col]["value"]),parse.(Float64,file["fit"][i]["integral"][int_type][cal][col]["error"])))
-        end
+        for (i,fit) in enumerate(fits)
 
+            next_row = DataFrame(
+                ID           = [i],
+                peakMarker   = [[]],
+                regionMarker = (0.0, 0.0),
+                bgMarker     = [Tuple{Float64, Float64}[]]
+            )
+
+            # Pear Markers
+            peak_nodes = findall("peakMarker", fit)
+            if !isempty(peak_nodes)
+                for (j,peak_node) in enumerate(peak_nodes)
+                    position_node = findfirst("position", peak_node)
+
+                    calibrated_node = findfirst("cal", position_node)
+                    isnothing(calibrated_node) && (calibrated_node = findfirst("uncal", position_node))
+    
+                    push!(next_row[1, "peakMarker"], parse(Float64, nodecontent(calibrated_node)))
+                end
+            end
+
+            # Region Markers
+            region_node = findfirst("regionMarker", fit)
+            begin_node = findfirst("begin", region_node)
+            end_node = findfirst("end", region_node)
+
+            calibrated_begin_node = findfirst("cal", begin_node)
+            calibrated_end_node = findfirst("cal", end_node)
+            isnothing(calibrated_begin_node) && (calibrated_begin_node = findfirst("uncal", begin_node))
+            isnothing(calibrated_end_node) && (calibrated_end_node = findfirst("uncal", end_node))
+
+            region_begin = parse(Float64, nodecontent(calibrated_begin_node))
+            region_end = parse(Float64, nodecontent(calibrated_end_node))
+
+            next_row[1, "regionMarker"] = (region_begin, region_end)
+            
+            # Background Markers
+            bg_nodes = findall("bgMarker", fit)
+            if !isempty(bg_nodes)
+                for (j,bg_node) in enumerate(bg_nodes)
+                    begin_node = findfirst("begin", bg_node)
+                    end_node = findfirst("end", bg_node)
+
+                    calibrated_begin_node = findfirst("cal", begin_node)
+                    calibrated_end_node = findfirst("cal", end_node)
+                    isnothing(calibrated_begin_node) && (calibrated_begin_node = findfirst("uncal", begin_node))
+                    isnothing(calibrated_end_node) && (calibrated_end_node = findfirst("uncal", end_node))
+
+                    bg_begin = parse(Float64, nodecontent(calibrated_begin_node))
+                    bg_end = parse(Float64, nodecontent(calibrated_end_node))
+                    
+                    push!(next_row[1, "bgMarker"], (bg_begin, bg_end))
+                end
+            end
+
+            append!(DF, next_row)
+        end
+        
     else
-        throw(ArgumentError("type $type not a valid type"))
+        error("Mode must be :peak, :sub or :param")
     end
-    return vcat(A...)
-end
-
-"""
-    readfits(file, ...)
-
-Converts a XML-fitfile from hdtv to a DataFrame.
-
-Optional arguments include:
-- `cal`: `true` or `false`
-- `type`: "peak" (default), "tot", "bg", "sub"
-"""
-function readfits(file;cal=true,type="peak")
-    str=parse_xml(read(file,String))
-    pos=readvals(str,"pos", cal=cal, type=type)
-    wid=readvals(str,"width", cal=cal, type=type)
-    vol=readvals(str,"vol", cal=cal, type=type)
-    return (DataFrame(([pos wid vol]),[:pos,:wid,:vol]))
+    
+    return DF
 end
 
 export val, unc, mes, wmean, mean_std, tableDF, writeDF, readDF, readfits
 
-end # module 
+end
