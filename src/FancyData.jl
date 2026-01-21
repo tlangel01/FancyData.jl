@@ -1,10 +1,14 @@
 """
 # FancyData.jl
 
-## Exported Functions
+## Main Functions
 
-`val`, `unc`, `mes`, `mean_std`, `wmean`, `tableDF`, `writeDF`, `readDF`, `readfits`
-
+- `mes()`: Converts a Measurement to a String with format `value(uncertainty)`
+- `mean_std()`: Calculates the mean with standard deviation of a given array
+- `wmean()`: Calculates the weighted mean of a given array of Measurements
+- `tableDF()`: Prints a DataFrame to a TeX-formatted table
+- `readDF()`, `writeDF()`: Reads a delimited file to a DataFrame and vice versa
+- `readfits()`: Fitlistreader for HDTV-based XML-files
 """
 module FancyData
 __precompile__()
