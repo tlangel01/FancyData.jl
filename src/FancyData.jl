@@ -174,7 +174,7 @@ Reads a delimited file to a DataFrame with default delimiter `\\t`.
 readDF(path_to_DF,delimiter='\t') = DataFrame(readdlm(path_to_DF,delimiter)[2:end,:], strip.(readdlm(path_to_DF,delimiter)[1,:]))
 
 """
-    readfits(XML_file::String, mode::Symbol=:peak)
+    readfits(XML_file::String; mode::Symbol=:peak)
 
 Reads an HDTV file and returns DataFrame
 
@@ -187,7 +187,7 @@ All returned values are calibrated if possible with uncalibrated values as a fal
 
 If uncertainties are present, the values are given as measurements.
 """
-function readfits(file::String, mode::Symbol=:peak)
+function readfits(file::String; mode::Symbol=:peak)
     document = readxml(file)
     fits = findall("//fit", document)
 
