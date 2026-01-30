@@ -164,14 +164,14 @@ end
 
 Saves a DataFrame as a delimted file with default delimiter `\\t`.
 """
-writeDF(out,DF) = writedlm(out,Iterators.flatten(([names(DF)],eachrow(DF))), delim)
+writeDF(out,DF;delim='\t') = writedlm(out,Iterators.flatten(([names(DF)],eachrow(DF))), delim)
 
 """
     readDF(file_in::String; delim::Char='\\t')
 
 Reads a delimited file to a DataFrame with default delimiter `\\t`.
 """
-readDF(path_to_DF,delimiter='\t') = DataFrame(readdlm(path_to_DF,delimiter)[2:end,:], strip.(readdlm(path_to_DF,delim)[1,:]))
+readDF(path_to_DF;delim='\t') = DataFrame(readdlm(path_to_DF,delimiter)[2:end,:], strip.(readdlm(path_to_DF,delim)[1,:]))
 
 """
     readfits(XML_file::String; mode::Symbol=:peak)
