@@ -1,7 +1,7 @@
 name = "FancyData"
 uuid = "4d4f2cbd-77f3-463f-9a10-7188e0cfd622"
-version = "0.1.0"
-authors = ["28tob "]
+version = "0.1.1"
+authors = ["tlangel01"]
 
 [deps]
 DataFrames = "a93c6f00-e57d-5684-b7b6-d8193f3e46c0"
