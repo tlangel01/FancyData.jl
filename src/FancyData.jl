@@ -160,18 +160,18 @@ function tableDF(DF)
 end 
 
 """
-    writeDF(file_out::String, DF::DataFrame)
+    writeDF(file_out::String, DF::DataFrame; delim::Char='\\t')
 
 Saves a DataFrame as a delimted file with default delimiter `\\t`.
 """
-writeDF(out,DF) = writedlm(out,Iterators.flatten(([names(DF)],eachrow(DF))),'\t')
+writeDF(out,DF) = writedlm(out,Iterators.flatten(([names(DF)],eachrow(DF))), delim)
 
 """
-    readDF(file_in::String, delimiter='\\t'::Char)
+    readDF(file_in::String; delim::Char='\\t')
 
 Reads a delimited file to a DataFrame with default delimiter `\\t`.
 """
-readDF(path_to_DF,delimiter='\t') = DataFrame(readdlm(path_to_DF,delimiter)[2:end,:], strip.(readdlm(path_to_DF,delimiter)[1,:]))
+readDF(path_to_DF,delimiter='\t') = DataFrame(readdlm(path_to_DF,delimiter)[2:end,:], strip.(readdlm(path_to_DF,delim)[1,:]))
 
 """
     readfits(XML_file::String; mode::Symbol=:peak)
