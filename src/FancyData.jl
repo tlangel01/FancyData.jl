@@ -169,9 +169,27 @@ writeDF(out,DF;delim='\t') = writedlm(out,Iterators.flatten(([names(DF)],eachrow
 """
     readDF(file_in::String; delim::Char='\\t')
 
-Reads a delimited file to a DataFrame with default delimiter `\\t`.
+Reads a delimited file to a DataFrame with default delimiter `\\t` and attempts basic parseing of Measurements and Missing fields.
 """
-readDF(path_to_DF;delim='\t') = DataFrame(readdlm(path_to_DF,delim)[2:end,:], strip.(readdlm(path_to_DF,delim)[1,:]))
+function FancyData.readDF(path_to_DF; delim='\t')
+    data = readdlm(path_to_DF, delim)
+    names = Symbol.(data[1,:])
+    matrix = data[2:end,:]
+
+    function transform_element(val)
+        if val isa AbstractString
+            if val == "missing"
+                val = missing
+            else
+                m = tryparse(Measurement{Float64}, val)
+                return isnothing(m) ? val : m
+            end
+        else
+            return val
+        end
+    end
+    return DataFrame(transform_element.(matrix), names)
+end 
 
 """
     readfits(XML_file::String; mode::Symbol=:peak)
