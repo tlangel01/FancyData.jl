@@ -171,7 +171,7 @@ writeDF(out,DF;delim='\t') = writedlm(out,Iterators.flatten(([names(DF)],eachrow
 
 Reads a delimited file to a DataFrame with default delimiter `\\t` and attempts basic parseing of Measurements and Missing fields.
 """
-function FancyData.readDF(path_to_DF; delim='\t')
+function readDF(path_to_DF; delim='\t')
     data = readdlm(path_to_DF, delim)
     names = Symbol.(data[1,:])
     matrix = data[2:end,:]
