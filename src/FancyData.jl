@@ -31,6 +31,9 @@ function mes(x::Measurement)
     # Ensure a Measurement was input
     try
         y,dy = val(x),unc(x)
+        # only fails for NaN so it wont fail after try-statement
+        round(Int, y)
+        round(Int, dy)
     catch err 
         @warn "mes: failed to interpret input, returning original value" input=x exception=err
         return x

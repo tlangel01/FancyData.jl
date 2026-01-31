@@ -1,6 +1,6 @@
 name = "FancyData"
 uuid = "4d4f2cbd-77f3-463f-9a10-7188e0cfd622"
-version = "0.1.3"
+version = "0.1.4"
 authors = ["tlangel01"]
 
 [deps]
