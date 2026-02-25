@@ -130,11 +130,11 @@ function parse_measurement(s::AbstractString)
 end
 
 """
-    tableDF(DF::DataFrame)
+    tableDF(DF::AbstractDataFrame)
 
 Returns LaTeX table from a DataFrame.
 """
-function tableDF(DF::DataFrame)
+function tableDF(DF::AbstractDataFrame)
     l,w = size(DF)
     DF = mes.(DF)
     lengths = [maximum(length.([(typeof(DF[j,i])==Missing) ? 0 : string(DF[j,i]) for j in 1:l])) for i in 1:w]
@@ -168,18 +168,18 @@ function tableDF(DF::DataFrame)
 end 
 
 """
-    writeDF(file_out::String, DF::DataFrame; delim::Char='\\t')
+    writeDF(file_out::AbstractString, DF::AbstractDataFrame; delim::Char='\\t')
 
 Saves a DataFrame as a delimted file with default delimiter `\\t`.
 """
-writeDF(out,DF;delim='\t') = writedlm(out,Iterators.flatten(([names(DF)],eachrow(DF))), delim)
+writeDF(out::AbstractString,DF::AbstractDataFrame;delim::Char='\t') = writedlm(out,Iterators.flatten(([names(DF)],eachrow(DF))), delim)
 
 """
-    readDF(file_in::String; delim::Char='\\t')
+    readDF(file_in::AbstractString; delim::Char='\\t')
 
 Reads a delimited file to a DataFrame with default delimiter `\\t` and attempts basic parseing of Measurements and Missing fields.
 """
-function readDF(path_to_DF; delim='\t')
+function readDF(path_to_DF::AbstractString; delim::Char='\t')
     data = readdlm(path_to_DF, delim)
     names = Symbol.(data[1,:])
     matrix = data[2:end,:]
@@ -200,7 +200,7 @@ function readDF(path_to_DF; delim='\t')
 end 
 
 """
-    readfits(XML_file::String; mode::Symbol=:peak)
+    readfits(XML_file::AbstractString; mode::Symbol=:peak)
 
 Reads an HDTV file and returns DataFrame
 
@@ -213,7 +213,7 @@ All returned values are calibrated if possible with uncalibrated values as a fal
 
 If uncertainties are present, the values are given as measurements.
 """
-function readfits(file::String; mode::Symbol=:peak)
+function readfits(file::AbstractString; mode::Symbol=:peak)
     document = readxml(file)
     fits = findall("//fit", document)
 
