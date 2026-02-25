@@ -69,7 +69,7 @@ function mes(x::Measurement)
 end
 
 """
-    wmean(X::AbstractVector{<:Measurement}, mode::Symbol=:max)
+    wmean(X::AbstractVector{<:Measurement}; mode::Symbol=:max)
 
 Calculates the weighted mean of `X`. 
 
@@ -78,7 +78,7 @@ Available modes:
 - `:both`: Returns external and internal uncertainties
 """
 function wmean(X::AbstractVector{<:Measurement}; mode::Symbol=:max)
-    mode in [:max,:both] || throw(ArgumentError("mode must be :max or :both (got :$mode)"))
+    mode in (:max,:both) || throw(ArgumentError("mode must be :max or :both (got :$mode)"))
     x,dx = val.(X),unc.(X)
     l = length(x)
     weights = 1 ./ (dx.^2) 
@@ -86,8 +86,13 @@ function wmean(X::AbstractVector{<:Measurement}; mode::Symbol=:max)
     dx_extern = sqrt(1 / (l-1) * sum(weights .* (x.-xbar).^2) / sum(weights))
     dx_intern = 1 / sqrt(sum(weights))
     l == 1 && (dx_extern = dx_intern)
+    isnan(xbar) && @warn "array does not contain uncertainties or at least one uncertainty is 0"
     mode === :both && return (mean=xbar, ext=dx_extern, int=dx_intern)
     return  measurement(xbar, max(dx_extern,dx_intern))
+end
+
+function wmean(X::AbstractVector; mode::Symbol=:max)
+    wmean(convert(Vector{Measurement},X); mode=mode)
 end
 
 """
@@ -129,7 +134,7 @@ end
 
 Returns LaTeX table from a DataFrame.
 """
-function tableDF(DF)
+function tableDF(DF::DataFrame)
     l,w = size(DF)
     DF = mes.(DF)
     lengths = [maximum(length.([(typeof(DF[j,i])==Missing) ? 0 : string(DF[j,i]) for j in 1:l])) for i in 1:w]
